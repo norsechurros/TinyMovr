@@ -1,0 +1,2 @@
+TinyM
+-DCATKIN_DEVEL_PREFIX=/home/vansh/tiny_ws/devel -DCMAKE_INSTALL_PREFIX=/home/vansh/tiny_ws/install -G Unix Makefiles
