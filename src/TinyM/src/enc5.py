@@ -12,9 +12,9 @@ class WheelOdometry:
         rospy.init_node('wheel_odometry', anonymous=True)
         self.enc_vel_tm1 = 0.0
         self.enc_vel_tm2 = 0.0
-        
+
         self.prev_time = rospy.Time.now()
-        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=10)  # Publish to /odom
+        self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=10)
 
         self.odom = Odometry()
         self.odom.header.frame_id = "odom"
@@ -24,57 +24,42 @@ class WheelOdometry:
 
         self.wheel_distance = 0.76  # Distance between wheels (assumed value)
         self.wheel_radius = 0.19  # Radius of each wheel (assumed value)
-        self.theta = 0.0
+
         rospy.Subscriber('encoder_vel_tm1', Float64, self.enc_tm1_callback)
         rospy.Subscriber('encoder_vel_tm2', Float64, self.enc_tm2_callback)
-        rospy.Subscriber('encoder_pos_tm1', Float64, self.enc_pos_tm1_callback)
-        rospy.Subscriber('encoder_pos_tm2', Float64, self.enc_pos_tm2_callback)
 
     def enc_tm1_callback(self, data):
         self.enc_vel_tm1 = data.data
 
     def enc_tm2_callback(self, data):
         self.enc_vel_tm2 = data.data
-        
-    def enc_pos_tm1_callback(self, data):
-        self.enc_pos_tm1 = data.data
-        
-    def enc_pos_tm2_callback(self, data):
-        self.enc_pos_tm2 = data.data
 
     def calculate_wheel_odometry(self):
         current_time = rospy.Time.now()
         dt = (current_time - self.prev_time).to_sec()
-        self.vel1 = self.enc_vel_tm1*0.0010362
-        self.vel2 = self.enc_vel_tm2*0.0010362
-         
-        #print(self.vel1)
-        #print(self.vel2)
-
 
         # Calculate linear and angular velocity from encoder velocity estimates
-        linear_vel = (self.vel2 - self.vel1) / 2.0
+        linear_vel = (self.enc_vel_tm2 - self.enc_vel_tm1) / self.wheel_distance
+        angular_vel = (self.enc_vel_tm1 + self.enc_vel_tm2) / 2.0
 
-        angular_vel = (-self.vel1 -self.vel2) / self.wheel_distance
         # Calculate lateral velocity
         lateral_vel = angular_vel * self.wheel_distance / 2
 
         # Update pose
-        self.pose.position.x += (linear_vel * dt * math.cos(self.theta))
-        self.pose.position.y += (linear_vel * dt * math.sin(self.theta)) #+ lateral_vel * dt 
+        self.pose.position.x += (linear_vel * dt)/1000
+        self.pose.position.y += (lateral_vel * dt)/1000
         self.pose.position.z = 0  # Assuming no vertical movement
 
         # Update orientation (quaternion)
-        # delta_theta = angular_vel * dt
-        # print(delta_theta)
-        # quaternion = self.pose.orientation
-        # q = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
-        # new_quaternion = [ 0, 0, math.sin(delta_theta / 2), math.cos(delta_theta / 2)]
-        # updated_q = [a * b for a, b in zip(q, new_quaternion)]
-        # self.pose.orientation = Quaternion(*updated_q)
-        self.theta += angular_vel*dt
-        self.pose.orientation = Quaternion(0, 0, math.sin(self.theta/2), math.cos(self.theta/2))
-        print(self.theta)
+        delta_theta = angular_vel * dt
+        q = [self.pose.orientation.x, self.pose.orientation.y, self.pose.orientation.z, self.pose.orientation.w]
+        new_quaternion = [
+            q[0] * math.cos(delta_theta / 2) - q[1] * math.sin(delta_theta / 2),
+            q[0] * math.sin(delta_theta / 2) + q[1] * math.cos(delta_theta / 2),
+            q[2],
+            q[3]
+        ]
+        self.pose.orientation = Quaternion(*new_quaternion)
 
         # Update twist
         self.twist.linear.x = linear_vel
