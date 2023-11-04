@@ -47,19 +47,19 @@ class TinyM:
 
         self.tm3.encoder.type = 1
         self.tm3.motor.pole_pairs = 4
-        self.tm3.controller.velocity.p_gain = 0.007
-        self.tm3.controller.velocity.i_gain = 0.001
+        self.tm3.controller.velocity.p_gain = 0.0105 #0.0105 initially was 0.007
+        self.tm3.controller.velocity.i_gain = 0.003 #try, initially was 0.001
         self.tm3.save_config()
         self.tm3.reset()
-        time.sleep(3)
+        time.sleep(2)
 
         self.tm2.encoder.type = 1
         self.tm2.motor.pole_pairs = 4
-        self.tm2.controller.velocity.p_gain = 0.007
-        self.tm2.controller.velocity.i_gain = 0.001
+        self.tm2.controller.velocity.p_gain = 0.0105
+        self.tm2.controller.velocity.i_gain = 0.003
         self.tm2.save_config()
         self.tm2.reset()
-        time.sleep(3)
+        time.sleep(2)
 
         self.rate = rospy.Rate(10)
 
@@ -68,10 +68,10 @@ class TinyM:
     def engage(self):
         self.tm3.controller.velocity_mode()
         self.tm3.controller.velocity_setpoint = 0
-        time.sleep(2)
+        time.sleep(1)
         self.tm2.controller.velocity_mode()
         self.tm2.controller.velocity_setpoint = 0
-        time.sleep(2)
+        time.sleep(1)
         signal.signal(signal.SIGINT, self.signal_handler)
 
     def cmd_vel_clbk(self, msg):
@@ -84,10 +84,10 @@ class TinyM:
         self.tm3.controller.velocity.setpoint = (right_w_rpm / 60) * 24 * 60
         self.tm2.controller.velocity.setpoint = (left_w_rpm / 60) * 24 * 60
 
-        print("TM2: " + str(self.tm2.motor))
+        print("TM2: " + str(self.tm2.controller))
         print("                                                     ")
         print("-----------------------------------------------------")
-        print("TM3: " + str(self.tm3.motor))
+        print("TM3: " + str(self.tm3.controller))
         print("                                                     ")
         print("-----------------------------------------------------")
 
@@ -120,8 +120,8 @@ class TinyM:
         self.encoder_pub()
 
     def watchdog(self):
-        self.tm2.watchdog.timeout = 1
-        self.tm3.watchdog.timeout = 1
+        self.tm2.watchdog.timeout = 2
+        self.tm3.watchdog.timeout = 2
 
     def signal_handler(self, signum, frame):
         print("Stopping the program and idling the controller...")
