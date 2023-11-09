@@ -48,7 +48,7 @@ class TinyM:
         self.tm3.encoder.type = 1
         self.tm3.motor.pole_pairs = 4
         self.tm3.controller.velocity.p_gain = 0.0105 #0.0105 initially was 0.007
-        self.tm3.controller.velocity.i_gain = 0.003 #try, initially was 0.001
+        self.tm3.controller.velocity.i_gain = 0.005 #try, initially was 0.001
         self.tm3.save_config()
         self.tm3.reset()
         time.sleep(2)
@@ -56,7 +56,7 @@ class TinyM:
         self.tm2.encoder.type = 1
         self.tm2.motor.pole_pairs = 4
         self.tm2.controller.velocity.p_gain = 0.0105
-        self.tm2.controller.velocity.i_gain = 0.003
+        self.tm2.controller.velocity.i_gain = 0.005
         self.tm2.save_config()
         self.tm2.reset()
         time.sleep(2)
@@ -95,48 +95,47 @@ class TinyM:
             print("-----------------------------------------------------")
         except tinymovr.channel.ResponseError as e:
             print(f"Error communicating with TinyM: {e}")
-            pass
+            
             
             
     def encoder_pub(self):
         
-        try:
-                
+                         
             pub1 = rospy.Publisher('encoder_pos_tm1', Float64, queue_size=1)
             pub2 = rospy.Publisher('encoder_pos_tm2', Float64, queue_size=1)
             pub3 = rospy.Publisher('encoder_vel_tm1', Float64, queue_size=1)
             pub4 = rospy.Publisher('encoder_vel_tm2', Float64, queue_size=1)
 
             while not rospy.is_shutdown():
-                
-                enc_vel_estTM1 = self.tm3.encoder.velocity_estimate.magnitude
-                enc_vel_estTM2 = self.tm2.encoder.velocity_estimate.magnitude
-                
-                enc_pos_estTM1 = self.tm3.encoder.position_estimate.magnitude               
-                enc_pos_estTM2 = self.tm2.encoder.position_estimate.magnitude
+                try:
+                    enc_vel_estTM1 = self.tm3.encoder.velocity_estimate.magnitude
+                    enc_vel_estTM2 = self.tm2.encoder.velocity_estimate.magnitude
+                    
+                    enc_pos_estTM1 = self.tm3.encoder.position_estimate.magnitude               
+                    enc_pos_estTM2 = self.tm2.encoder.position_estimate.magnitude
 
-                pub1.publish(Float64(enc_pos_estTM1))
-                pub2.publish(Float64(enc_pos_estTM2))
-                pub3.publish(Float64(enc_vel_estTM1))
-                pub4.publish(Float64(enc_vel_estTM2))
-                self.rate.sleep()
+                    pub1.publish(Float64(enc_pos_estTM1))
+                    pub2.publish(Float64(enc_pos_estTM2))
+                    pub3.publish(Float64(enc_vel_estTM1))
+                    pub4.publish(Float64(enc_vel_estTM2))
+                    self.rate.sleep()
                 
-        except tinymovr.channel.ResponseError as e:
-                print(f"Error communicating with TinyM: {e}")
-                pass
+                except tinymovr.channel.ResponseError as e:
+                    print(f"Error communicating with TinyM: {e}")
+                
 
     def main(self):
         rospy.loginfo("Robot Motion Control Node started.")
         self.engage()
         #self.watchdog()
         rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_clbk)
-
+        self.watchdog()
         self.encoder_pub()
 
-    """ def watchdog(self):
-        self.tm2.watchdog.timeout = 2
-        self.tm3.watchdog.timeout = 2
-        """
+    def watchdog(self):
+        self.tm2.watchdog.enabled = 1
+        self.tm3.watchdog.enabled = 1
+        
     def signal_handler(self, signum, frame):
         print("Stopping the program and idling the controller...")
         self.tm3.controller.idle()
