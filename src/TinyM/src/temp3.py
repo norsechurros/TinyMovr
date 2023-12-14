@@ -128,7 +128,7 @@ class TinyM:
         rospy.loginfo("Robot Motion Control Node started.")
         self.engage()
         
-        rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_clbk)
+        rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_clbk, queue_size=1)
         
         self.encoder_pub()
         
