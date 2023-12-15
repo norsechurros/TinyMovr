@@ -5,7 +5,7 @@ from std_msgs.msg import Float64
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Pose, Twist, Quaternion
 import math
-import queue
+import tf
 
 class WheelOdometry:
 
@@ -21,13 +21,13 @@ class WheelOdometry:
         
         self.odom = Odometry()
         self.odom.header.frame_id = "odom"
-        self.odom.child_frame_id = "base_footprint"
+        self.odom.child_frame_id = "base_link"
         self.pose = Pose()
         self.twist = Twist()
         self.vels = []
         self.angles = []
 
-        self.wheel_distance = 0.68#0.76  # Distance between wheels (assumed value)
+        self.wheel_distance = 0.76 #0.76  # Distance between wheels (assumed value)
         self.wheel_radius = 0.19  # Radius of each wheel (assumed value)
         self.theta = 0.0
         rospy.Subscriber('encoder_vel_tm1', Float64, self.enc_tm1_callback)
@@ -119,7 +119,11 @@ class WheelOdometry:
     def main(self):
         rospy.loginfo("Wheel Odometry Node started.")
         rate = rospy.Rate(50)  # 50 Hz
+        br = tf.TransformBroadcaster()
         while not rospy.is_shutdown():
+            br.sendTransform((self.odom.pose.pose.position.x, self.odom.pose.pose.position.y, self.odom.pose.pose.position.z), 
+                             (self.odom.pose.pose.orientation.x, self.odom.pose.pose.orientation.y, self.odom.pose.pose.orientation.z, self.odom.pose.pose.orientation.w), 
+                             rospy.Time.now(), "base_link", "odom")
             self.publish_wheel_odometry()
             rate.sleep()
 

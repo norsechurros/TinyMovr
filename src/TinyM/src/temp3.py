@@ -14,7 +14,7 @@ from std_msgs.msg import Float64
 from tinymovr.tee import init_tee
 from tinymovr.config import create_device, get_bus_config
 
-AXLE_LENGTH = 0.76  # distance between the left and right wheels
+AXLE_LENGTH = 0.76 #0.71  # distance between the left and right wheels
 WHEEL_RADIUS = 0.19  # radius of each wheel
 
 class TinyM:
@@ -76,14 +76,14 @@ class TinyM:
 
     def cmd_vel_clbk(self, msg):
         try:
-            left_w_vel = msg.linear.x - (msg.angular.z * AXLE_LENGTH)
-            right_w_vel = msg.linear.x + (msg.angular.z * AXLE_LENGTH)
+            left_w_vel = msg.linear.x - ((msg.angular.z * AXLE_LENGTH)/2.0)
+            right_w_vel = msg.linear.x + ((msg.angular.z * AXLE_LENGTH)/2.0)
 
             left_w_rpm = (left_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
             right_w_rpm = -(right_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
 
-            self.tm3.controller.velocity.setpoint = (right_w_rpm / 60) * 24 * 60
-            self.tm2.controller.velocity.setpoint = (left_w_rpm / 60) * 24 * 60
+            self.tm3.controller.velocity.setpoint = (right_w_rpm / 60)/0.0010362  #* 24 * 60
+            self.tm2.controller.velocity.setpoint = (left_w_rpm / 60) /0.0010362 #* 24 * 60
         
         
 
@@ -93,6 +93,10 @@ class TinyM:
             print("TM3: " + str(self.tm3.controller))
             print("                                                     ")
             print("-----------------------------------------------------")
+            
+            print(self.tm2.watchdog)
+            print(self.tm3.watchdog)
+            
         except tinymovr.channel.ResponseError as e:
             print(f"Error communicating with TinyM: {e}")
             
@@ -126,17 +130,24 @@ class TinyM:
 
     def main(self):
         rospy.loginfo("Robot Motion Control Node started.")
+        #self.watchdogs()
+        
         self.engage()
+
+        self.watchdogs()
         
         rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_clbk, queue_size=1)
         
         self.encoder_pub()
+        self.tm2.watchdog.enabled = True
+        self.tm3.watchdog.enabled = True
         
-        self.watchdog()
+        
+        
 
-    def watchdog(self):
-        self.tm2.watchdog.enabled = 1
-        self.tm3.watchdog.enabled = 1
+    def watchdogs(self):
+        self.tm2.watchdog.enabled = True
+        self.tm3.watchdog.enabled = True
         
     def signal_handler(self, signum, frame):
         print("Stopping the program and idling the controller...")
