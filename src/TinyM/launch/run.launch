@@ -4,7 +4,8 @@
 	<node pkg="move_base" type="move_base" name="move_base" output="screen">
 		<rosparam file="$(find TinyM)/config/move_base.yaml" command="load" />
 	</node>
-    <node pkg="map_server" type="map_server" name="map_server" args="$(find TinyM)/map.yaml" />
+	<!--node pkg="map_server" type="map_server" name="map_server" args="$(find drive)/map.yaml" /-->
+	<node pkg="TinyM" type="throw_map" name="throw_map" />
     <node pkg="rviz" type="rviz" name="rizviz" args="-d $(find TinyM)/base.rviz" />
 
 </launch>

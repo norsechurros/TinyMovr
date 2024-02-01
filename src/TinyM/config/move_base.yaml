@@ -19,8 +19,8 @@ TrajectoryPlannerROS:
   robot_radius: 0.5
   planner_frequency: 10.0
   max_global_plan_lookahead_dist: 10
-  xy_goal_tolerance: 0.5
-  yaw_goal_tolerance: 0.5
+  xy_goal_tolerance: 1
+  yaw_goal_tolerance: 6.28
 
 local_costmap:
   global_frame: "odom"
