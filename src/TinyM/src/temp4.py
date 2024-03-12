@@ -39,48 +39,56 @@ class TinyM:
         params["channel"] = channel
         init_tee(can.Bus(**params))
 
-        self.tm3 = create_device(node_id=3)
+        self.tm1 = create_device(node_id=1)
         self.tm2 = create_device(node_id=2)
 
-        self.tm3.reset()
-        self.tm2.reset()
-
-        self.tm3.encoder.type = 1
-        self.tm3.motor.pole_pairs = 4
-        self.tm3.controller.velocity.p_gain = 0.0105 #0.0105 initially was 0.007
-        self.tm3.controller.velocity.i_gain = 0.005 #try, initially was 0.001
-        self.tm3.save_config()
-        self.tm3.reset()
+        self.tm1.reset()
         time.sleep(2)
-
-        self.tm2.encoder.type = 1
-        self.tm2.motor.pole_pairs = 4
-        self.tm2.controller.velocity.p_gain = 0.0105
-        self.tm2.controller.velocity.i_gain = 0.005
-        self.tm2.save_config()
+        
         self.tm2.reset()
         time.sleep(2)
+      #self.tm1.encoder.type = 1
+      #self.tm1.motor.pole_pairs = 7
+      #self.tm1.controller.velocity.p_gain = 0.01 #0.0105 initially was 0.007
+      #self.tm1.controller.velocity.i_gain = 0.0 #try, initially was 0.001
+      #self.tm1.save_config()
+      #self.tm1.reset()
+      #time.sleep(2)
+
+      #self.tm2.encoder.type = 1
+      #self.tm2.motor.pole_pairs = 7
+      #self.tm2.controller.velocity.p_gain = 0.01
+      #self.tm2.controller.velocity.i_gain = 0.0
+      #self.tm2.save_config()
+      #self.tm2.reset()
+      #time.sleep(2)
 
         self.rate = rospy.Rate(10)
 
    
 
     def engage(self):
-        self.tm3.controller.velocity_mode()
-        self.tm3.controller.velocity_setpoint = 0
-        time.sleep(1)
+        self.tm1.reset()
+        self.tm1.controller.velocity_mode()
+        
+    
+        #self.tm1.controller.velocity_setpoint = 0
+        
+        
+        self.tm2.reset()
         self.tm2.controller.velocity_mode()
-        self.tm2.controller.velocity_setpoint = 0
-        time.sleep(1)
+        
+        #self.tm2.controller.velocity_setpoint = 0
+        
         signal.signal(signal.SIGINT, self.signal_handler)
 
-    def error_Reset(self):
-        print("ERROR")
-        self.tm3.controller.idle()
-        self.tm2.controller.idle()
-        self.tm3.reset()
-        self.tm2.reset()
-        self.engage()
+  #def error_Reset(self):
+  #    print("ERROR")
+  #    self.tm3.controller.idle()
+  #    self.tm2.controller.idle()
+  #    self.tm3.reset()
+  #    self.tm2.reset()
+  #    self.engage()
         
     def cmd_vel_clbk(self, msg):
         try:
@@ -91,16 +99,16 @@ class TinyM:
             left_w_rpm = (left_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
             right_w_rpm = -(right_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
 
-            self.tm3.controller.velocity.setpoint = (right_w_rpm / 60) * 24 * 60
+            self.tm1.controller.velocity.setpoint = (right_w_rpm / 60) * 24 * 60
             self.tm2.controller.velocity.setpoint = (left_w_rpm / 60) * 24 * 60
 
-            if self.tm2.controller.state != 0.0 or self.tm3.controller.state != 0.0:
-                self.error_Reset()
+           #if self.tm2.controller.state != 0.0 or self.tm1.controller.state != 0.0:
+           #    self.error_Reset()
 
             print("TM2: " + str(self.tm2.controller))
             print("                                                     ")
             print("-----------------------------------------------------")
-            print("TM3: " + str(self.tm3.controller))
+            print("TM1: " + str(self.tm1.controller))
             print("                                                     ")
             print("-----------------------------------------------------")
         except tinymovr.channel.ResponseError as e:
@@ -120,9 +128,9 @@ class TinyM:
 
                 while not rospy.is_shutdown():
                     try:
-                        enc_vel_est_tm1 = self.tm3.encoder.velocity_estimate.magnitude
+                        enc_vel_est_tm1 = self.tm1.encoder.velocity_estimate.magnitude
                         enc_vel_est_tm2 = self.tm2.encoder.velocity_estimate.magnitude
-                        enc_pos_est_tm1 = self.tm3.encoder.position_estimate.magnitude
+                        enc_pos_est_tm1 = self.tm1.encoder.position_estimate.magnitude
                         enc_pos_est_tm2 = self.tm2.encoder.position_estimate.magnitude
 
                         pub1.publish(Float64(enc_pos_est_tm1))
@@ -137,11 +145,11 @@ class TinyM:
 
     def watchdog(self):
         self.tm2.watchdog.enabled = 1
-        self.tm3.watchdog.enabled = 1
+        self.tm1.watchdog.enabled = 1
         
     def signal_handler(self, signum, frame):
         print("Stopping the program and idling the controller...")
-        self.tm3.controller.idle()
+        self.tm1.controller.idle()
         self.tm2.controller.idle()
         sys.exit(0)
         
@@ -154,6 +162,8 @@ class TinyM:
         self.encoder_pub()
         
         self.watchdog()
+        
+
 
 if __name__ == '__main__':
     try:
@@ -161,3 +171,5 @@ if __name__ == '__main__':
         controller.main()
     except rospy.ROSInterruptException:
         pass
+    
+    rospy.spin()

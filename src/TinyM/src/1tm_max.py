@@ -42,21 +42,33 @@ class TinyM:
         params["channel"] = channel
         init_tee(can.Bus(**params))
 
-        self.tm3 = create_device(node_id=1)
+        self.tm1 = create_device(node_id=1)
+        self.tm2 = create_device(node_id=2)
+
+        self.tm1.encoder.type = 1
+        self.tm1.motor.pole_pairs = 7
+        self.tm1.controller.velocity.p_gain = 0.07 ##should be 0.017
+        self.tm1.controller.velocity.i_gain = 0.7
+        self.tm1.save_config()
+        self.tm1.reset()
+        time.sleep(1)
         
-        self.tm3.encoder.type = 1
-        self.tm3.motor.pole_pairs = 7
-        self.tm3.controller.velocity.p_gain = 0.01
-        self.tm3.controller.velocity.i_gain = 0.0
-        self.tm3.save_config()
-        self.tm3.reset()
-        time.sleep(2)
+        self.tm2.encoder.type = 1
+        self.tm2.motor.pole_pairs = 7
+        self.tm2.controller.velocity.p_gain = 0.06
+        self.tm2.controller.velocity.i_gain = 0.7
+        self.tm2.save_config()
+        self.tm2.reset()
+        time.sleep(1)
         
-        #self.tm3.controller.calibrate()
+        #self.tm1.controller.calibrate()
         
     def engage(self):
-        self.tm3.controller.velocity_mode()
-        self.tm3.controller.velocity_setpoint = 0
+        self.tm1.controller.velocity_mode()
+        self.tm1.controller.velocity_setpoint = 0
+        time.sleep(1)
+        self.tm2.controller.velocity_mode()
+        self.tm2.controller.velocity_setpoint = 0
         time.sleep(1)
         
     def cmd_vel_clbk(self, msg):
@@ -67,13 +79,20 @@ class TinyM:
             left_w_rpm = (left_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
             right_w_rpm = -(right_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
 
-            self.tm3.controller.velocity.setpoint = (right_w_rpm / 60) * 29 * 60
+            self.tm1.controller.velocity.setpoint = (left_w_rpm / 60) * 29 * 60
+            self.tm2.controller.velocity.setpoint = (right_w_rpm / 60) * 29 * 60
             
             print("-----------------------------------------------------")
-            print("TM3: " + str(self.tm3.controller))
+            print("tm1: " + str(self.tm1.controller))
             
             print("---------------------------MOTOR--------------------------")
-            print("TM3: " + str(self.tm3.motor))
+            print("tm1: " + str(self.tm1.motor))
+            
+            print("-----------------------------------------------------")
+            print("tm2: " + str(self.tm2.controller))
+            
+            print("---------------------------MOTOR--------------------------")
+            print("tm2: " + str(self.tm2.motor))
             
             
         except tinymovr.channel.ResponseError as e:

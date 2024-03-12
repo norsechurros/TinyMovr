@@ -79,8 +79,7 @@ class WheelOdometry:
         avg_angle.data = sum(self.angles)/len(self.angles)
         
         self.avg_angle_pub.publish(avg_angle)
-  
-        # Calculate lateral velocity
+  # Calculate lateral velocity
         lateral_vel = angular_vel * self.wheel_distance / 2
 
         # Update pose
