@@ -1,0 +1,2 @@
+fusingdata:robot_localization:vectornav
+-DCATKIN_DEVEL_PREFIX=/home/vansh/ekfFusion/devel -DCMAKE_INSTALL_PREFIX=/home/vansh/ekfFusion/install -G Unix Makefiles
