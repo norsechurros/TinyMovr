@@ -48,15 +48,15 @@ class TinyM:
         self.tm1.encoder.type = 1
         self.tm1.motor.pole_pairs = 2
         self.tm1.controller.velocity.p_gain = 0.0105 #0.0105 initially was 0.007
-        self.tm1.controller.velocity.i_gain = 0.005 #try, initially was 0.001
+        self.tm1.controller.velocity.i_gain = 0.02 #try, initially was 0.001
         self.tm1.save_config()
         self.tm1.reset()
         time.sleep(1)
 
         self.tm2.encoder.type = 1
         self.tm2.motor.pole_pairs = 2
-        self.tm2.controller.velocity.p_gain = 0.0105
-        self.tm2.controller.velocity.i_gain = 0.005
+        self.tm2.controller.velocity.p_gain = 0.0150 #0.0105
+        self.tm2.controller.velocity.i_gain = 0.002 #0.005
         self.tm2.save_config()
         self.tm2.reset()
         time.sleep(1)
@@ -79,8 +79,8 @@ class TinyM:
             left_w_vel = msg.linear.x - ((msg.angular.z * AXLE_LENGTH)/2.0)
             right_w_vel = msg.linear.x + ((msg.angular.z * AXLE_LENGTH)/2.0)
 
-            left_w_rpm = (left_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
-            right_w_rpm = -(right_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
+           # left_w_rpm = (left_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
+           #right_w_rpm = -(right_w_vel / (2 * 3.14 * WHEEL_RADIUS)) * 60
 
             self.tm1.controller.velocity.setpoint = -(178.2535/WHEEL_RADIUS)*right_w_vel         #(right_w_rpm / 60)*29 * 60 #/0.0010362  #* 24 * 60
             self.tm2.controller.velocity.setpoint = (178.2535/WHEEL_RADIUS)*left_w_vel            #(left_w_rpm / 60)*29 *60 #/0.0010362 #* 24 * 60
@@ -134,13 +134,13 @@ class TinyM:
         
         self.engage()
 
-        #self.watchdogs()
+        self.watchdogs()
         
         rospy.Subscriber('/cmd_vel', Twist, self.cmd_vel_clbk)
         
         self.encoder_pub()
-       # self.tm2.watchdog.enabled = True
-      #  self.tm1.watchdog.enabled = True
+        #self.tm2.watchdog.enabled = True
+        #self.tm1.watchdog.enabled = True
         
         
         

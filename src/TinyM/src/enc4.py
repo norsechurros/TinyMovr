@@ -16,6 +16,7 @@ class WheelOdometry:
         
         self.prev_time = rospy.Time.now()
         self.odom_pub = rospy.Publisher('/odom', Odometry, queue_size=10)  # Publish to /odom
+        self.odom_pub1 = rospy.Publisher('/odometry/wheel', Odometry, queue_size=10)
         self.avg_vel_pub = rospy.Publisher("/avg_vel", Float64, queue_size=1)
         self.avg_angle_pub = rospy.Publisher("/avg_angle", Float64, queue_size=1)
         
