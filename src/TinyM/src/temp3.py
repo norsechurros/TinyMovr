@@ -55,8 +55,8 @@ class TinyM:
 
         self.tm2.encoder.type = 1
         self.tm2.motor.pole_pairs = 2
-        self.tm2.controller.velocity.p_gain = 0.0150 #0.0105
-        self.tm2.controller.velocity.i_gain = 0.002 #0.005
+        self.tm2.controller.velocity.p_gain = 0.0105 #0.0105
+        self.tm2.controller.velocity.i_gain = 0.02 #0.005
         self.tm2.save_config()
         self.tm2.reset()
         time.sleep(1)
